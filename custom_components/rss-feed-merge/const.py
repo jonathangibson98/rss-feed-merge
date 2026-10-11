@@ -1,4 +1,4 @@
-"""Constants for News Feed Combiner."""
+"""Constants for RSS Feed Merge."""
 
-DOMAIN = "news_feed_combiner"
+DOMAIN = "rss_feed_merge"
 CONF_FEEDS = "feeds"

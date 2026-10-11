@@ -1,6 +1,6 @@
 {
-  "domain": "news_feed_combiner",
-  "name": "News Feed Combiner",
+  "domain": "rss_feed_merge",
+  "name": "RSS Feed Merge",
   "codeowners": [],
   "config_flow": true,
   "documentation": "https://github.com/",
