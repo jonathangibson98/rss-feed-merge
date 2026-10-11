@@ -1,0 +1,20 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "RSS Feed Merge",
+        "description": "Pick the feed sensors you want merged into one.",
+        "data": { "feeds": "Feed sensors" }
+      }
+    },
+    "abort": { "single_instance_allowed": "Already set up." }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "RSS Feed Merge",
+        "data": { "feeds": "Feed sensors" }
+      }
+    }
+  }
+}
