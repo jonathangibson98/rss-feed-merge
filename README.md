@@ -11,7 +11,8 @@ This started life as an AppDaemon app and was rebuilt as a proper integration, s
 - Set up and configured entirely from the UI (no YAML)
 - Change your feed list anytime with **Configure**, and it reloads on its own
 - Updates instantly whenever any source feed updates
-- One sensor with the total article count as its state and the merged articles in an `entries` attribute
+- One sensor with the total article count as its state and the articles grouped by source in a `sources` attribute
+- Keeps only each article's title and summary
 - Skips any feed that's unavailable or has no entries instead of breaking
 
 ## Requirements
@@ -45,27 +46,45 @@ To change feeds later, open the integration and click **Configure**.
 
 | Entity | State | Attributes |
 |---|---|---|
-| `sensor.all_news_feeds` | Total number of articles across all selected feeds | `entries`: the combined list of articles |
+| `sensor.all_news_feeds` | Total number of articles across all selected feeds | `sources`: a list with one section per feed |
+
+Each item in `sources` looks like this:
+
+```yaml
+sources:
+  - name: WSPA            # the feed sensor's friendly name
+    entity_id: sensor.wspa
+    entries:
+      - title: Headline here
+        summary: Short summary here
+```
+
+Only the `title` and `summary` of each article are kept. Everything else (links, tags, images, authors) is dropped, which also keeps the sensor small.
 
 Only one instance can be set up. Add all your feeds to it.
 
 ## Example: markdown card
 
-The exact fields on each article (`title`, `link`, `published`, and so on) depend on your source feeds, so check **Developer Tools → States** to see what yours provide.
+Each feed gets its own heading:
 
 ```yaml
 type: markdown
 content: >
-  {% set entries = state_attr('sensor.all_news_feeds', 'entries') or [] %}
-  {% for e in entries[:10] %}
-  - [{{ e.title }}]({{ e.link }})
+  {% for s in state_attr('sensor.all_news_feeds', 'sources') or [] %}
+  ## {{ s.name }}
+  {% for e in s.entries[:5] %}
+  **{{ e.title }}**
+
+  {{ e.summary }}
+
+  {% endfor %}
   {% endfor %}
 ```
 
 ## Good to know
 
-- **Articles are not sorted or de-duplicated.** They're added in the order your feeds are listed, one feed after another. Sorting by date is a possible future addition.
-- **Recorder size limit.** Home Assistant won't store attributes over 16 KB in the database, and a merged list can easily go past that. The sensor still works live, but you'll get a warning in the log. Exclude it from the recorder to keep your database lean and your logs quiet:
+- **Articles are not sorted or de-duplicated.** Each feed keeps its own order, and feeds appear in the order you selected them.
+- **Recorder size limit.** Home Assistant won't store attributes over 16 KB in the database, and a lot of feeds can still go past that even with only titles and summaries. The sensor still works live, but you'd get a warning in the log. Excluding it from the recorder is cheap insurance and keeps your database lean:
 
   ```yaml
   recorder:
