@@ -22,7 +22,7 @@ async def async_setup_entry(
 
 
 class AllNewsFeedsSensor(SensorEntity):
-    """Merges the 'entries' attribute of every selected feed sensor."""
+    """Groups the title and summary of every selected feed sensor by source."""
 
     _attr_name = "All News Feeds"
     _attr_icon = "mdi:newspaper-variant-multiple"
@@ -32,7 +32,7 @@ class AllNewsFeedsSensor(SensorEntity):
         self._feeds = feeds
         self._attr_unique_id = f"{entry.entry_id}_all_news_feeds"
         self._attr_native_value = 0
-        self._attr_extra_state_attributes = {"entries": []}
+        self._attr_extra_state_attributes = {"sources": []}
 
     async def async_added_to_hass(self) -> None:
         self.async_on_remove(
@@ -46,14 +46,27 @@ class AllNewsFeedsSensor(SensorEntity):
         self.async_write_ha_state()
 
     def _recalculate(self) -> None:
-        all_entries: list = []
+        sources: list[dict] = []
+        total = 0
         for feed in self._feeds:
             state = self.hass.states.get(feed)
             entries = state.attributes.get("entries") if state else None
-            if entries and isinstance(entries, list):
-                all_entries.extend(entries)
-            else:
+            if not entries or not isinstance(entries, list):
                 _LOGGER.debug("Skipping %s - no entries found", feed)
-        self._attr_native_value = len(all_entries)
-        self._attr_extra_state_attributes = {"entries": all_entries}
-        _LOGGER.debug("Combined %s articles from %s feeds", len(all_entries), len(self._feeds))
+                continue
+            slim = [
+                {"title": e.get("title", ""), "summary": e.get("summary", "")}
+                for e in entries
+                if isinstance(e, dict)
+            ]
+            sources.append(
+                {
+                    "name": state.attributes.get("friendly_name", feed),
+                    "entity_id": feed,
+                    "entries": slim,
+                }
+            )
+            total += len(slim)
+        self._attr_native_value = total
+        self._attr_extra_state_attributes = {"sources": sources}
+        _LOGGER.debug("Combined %s articles from %s feeds", total, len(sources))
