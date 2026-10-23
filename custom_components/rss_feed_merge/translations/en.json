@@ -3,11 +3,11 @@
     "step": {
       "user": {
         "title": "RSS Feed Merge",
-        "description": "Pick the feed sensors you want merged into one.",
-        "data": { "feeds": "Feed sensors" }
+        "description": "Name this merge and pick the feed sensors to combine. Run setup again to add more merges.",
+        "data": { "name": "Name", "feeds": "Feed sensors" }
       }
     },
-    "abort": { "single_instance_allowed": "Already set up." }
+    "abort": { "already_configured": "A merge with that name already exists." }
   },
   "options": {
     "step": {
