@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 
-from .const import CONF_FEEDS
+from .const import CONF_FEEDS, CONF_NAME, DEFAULT_NAME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,12 +24,13 @@ async def async_setup_entry(
 class AllNewsFeedsSensor(SensorEntity):
     """Groups the title and summary of every selected feed sensor by source."""
 
-    _attr_name = "All News Feeds"
     _attr_icon = "mdi:newspaper-variant-multiple"
     _attr_should_poll = False
 
     def __init__(self, entry: ConfigEntry, feeds: list[str]) -> None:
         self._feeds = feeds
+        # Old installs have no name saved, so they keep "All News Feeds".
+        self._attr_name = entry.data.get(CONF_NAME, DEFAULT_NAME)
         self._attr_unique_id = f"{entry.entry_id}_all_news_feeds"
         self._attr_native_value = 0
         self._attr_extra_state_attributes = {"sources": []}

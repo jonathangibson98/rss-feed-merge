@@ -7,30 +7,38 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 
-from .const import CONF_FEEDS, DOMAIN
+from .const import CONF_FEEDS, CONF_NAME, DEFAULT_NAME, DOMAIN
 
 
-def _schema(default: list[str]) -> vol.Schema:
-    return vol.Schema(
-        {
-            vol.Required(CONF_FEEDS, default=default): selector.EntitySelector(
-                selector.EntitySelectorConfig(domain="sensor", multiple=True)
-            )
-        }
+def _feeds_selector() -> selector.EntitySelector:
+    return selector.EntitySelector(
+        selector.EntitySelectorConfig(domain="sensor", multiple=True)
     )
 
 
 class RssFeedMergeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle the initial setup."""
+    """Handle setup. Run it as many times as you want, once per merge."""
 
     VERSION = 1
 
     async def async_step_user(self, user_input=None):
-        if self._async_current_entries():
-            return self.async_abort(reason="single_instance_allowed")
         if user_input is not None:
-            return self.async_create_entry(title="RSS Feed Merge", data=user_input)
-        return self.async_show_form(step_id="user", data_schema=_schema([]))
+            name = user_input[CONF_NAME].strip() or DEFAULT_NAME
+            # One merge per name, so you can't accidentally make duplicates.
+            await self.async_set_unique_id(name.lower())
+            self._abort_if_unique_id_configured()
+            return self.async_create_entry(
+                title=name,
+                data={CONF_NAME: name, CONF_FEEDS: user_input[CONF_FEEDS]},
+            )
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_NAME, default=DEFAULT_NAME): str,
+                vol.Required(CONF_FEEDS, default=[]): _feeds_selector(),
+            }
+        )
+        return self.async_show_form(step_id="user", data_schema=schema)
 
     @staticmethod
     @callback
@@ -39,7 +47,7 @@ class RssFeedMergeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class RssFeedMergeOptionsFlow(config_entries.OptionsFlow):
-    """Let you change the feed list later."""
+    """Let you change the feed list for one merge later."""
 
     async def async_step_init(self, user_input=None):
         if user_input is not None:
@@ -47,4 +55,7 @@ class RssFeedMergeOptionsFlow(config_entries.OptionsFlow):
         current = self.config_entry.options.get(
             CONF_FEEDS, self.config_entry.data.get(CONF_FEEDS, [])
         )
-        return self.async_show_form(step_id="init", data_schema=_schema(current))
+        schema = vol.Schema(
+            {vol.Required(CONF_FEEDS, default=current): _feeds_selector()}
+        )
+        return self.async_show_form(step_id="init", data_schema=schema)
