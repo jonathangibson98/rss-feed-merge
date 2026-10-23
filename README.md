@@ -2,13 +2,14 @@
 
 A Home Assistant custom integration that combines multiple RSS/news feed sensors into one.
 
-Pick your feed sensors in the UI, and you get a single sensor, `sensor.all_news_feeds`, holding every article from all of them. It's built for dashboards, markdown cards, and AI/LLM automations that need one list of headlines instead of five.
+Pick your feed sensors in the UI, name the merge, and you get a sensor (like `sensor.all_news_feeds`) holding every article from all of them. Want a separate one for sports, local news, tech? Run setup again and make as many merges as you want. It's built for dashboards, markdown cards, and AI/LLM automations that need one list of headlines instead of five.
 
 This started life as an AppDaemon app and was rebuilt as a proper integration, so there's no AppDaemon dependency, no YAML to edit, and no restart needed to change your feeds.
 
 ## Features
 
 - Set up and configured entirely from the UI (no YAML)
+- **Add as many merges as you want**, each with its own name, feeds, and sensor
 - Change your feed list anytime with **Configure**, and it reloads on its own
 - Updates instantly whenever any source feed updates
 - One sensor with the total article count as its state and the articles grouped by source in a `sources` attribute
@@ -38,15 +39,16 @@ This started life as an AppDaemon app and was rebuilt as a proper integration, s
 
 1. Go to **Settings → Devices & Services → Add Integration**.
 2. Search for **RSS Feed Merge**.
-3. Select the feed sensors you want combined and submit.
+3. Give the merge a name (this becomes the sensor name) and select the feed sensors you want combined.
+4. Want another merge? Repeat steps 1-3 with a different name.
 
-To change feeds later, open the integration and click **Configure**.
+To change the feeds for a merge later, open that entry and click **Configure**. To rename one, delete it and re-add it.
 
 ## What you get
 
 | Entity | State | Attributes |
 |---|---|---|
-| `sensor.all_news_feeds` | Total number of articles across all selected feeds | `sources`: a list with one section per feed |
+| `sensor.<your merge name>` (e.g. `sensor.all_news_feeds`, `sensor.sports_news`) | Total number of articles across that merge's feeds | `sources`: a list with one section per feed |
 
 Each item in `sources` looks like this:
 
@@ -61,7 +63,7 @@ sources:
 
 Only the `title` and `summary` of each article are kept. Everything else (links, tags, images, authors) is dropped, which also keeps the sensor small.
 
-Only one instance can be set up. Add all your feeds to it.
+Merge names must be unique. Each merge is its own entry, so you can edit or delete them independently.
 
 ## Example: markdown card
 
@@ -91,10 +93,11 @@ content: >
     exclude:
       entities:
         - sensor.all_news_feeds
+        - sensor.sports_news   # add each merge sensor you create
   ```
 
   If you already have a `recorder:` section, add only the `exclude:` part under it.
-- **Migrating from the AppDaemon app?** Remove or disable the old app before adding this integration, since both create `sensor.all_news_feeds`.
+- **Migrating from the AppDaemon app?** Remove or disable the old app before adding this integration, since both create `sensor.all_news_feeds`. Existing installs of this integration keep working as-is and keep their old sensor name.
 
 ## Troubleshooting
 
