@@ -54,8 +54,8 @@ Each item in `sources` looks like this:
 
 ```yaml
 sources:
-  - name: WSPA            # the feed sensor's friendly name
-    entity_id: sensor.wspa
+  - name: Local News            # the feed sensor's friendly name
+    entity_id: sensor.local_news
     entries:
       - title: Headline here
         summary: Short summary here
